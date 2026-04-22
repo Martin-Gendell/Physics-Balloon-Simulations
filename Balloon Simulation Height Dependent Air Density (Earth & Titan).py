@@ -5,7 +5,7 @@ from matplotlib.widgets import Slider, RadioButtons
 r_balloon = 5.0
 gas_density = 0.18
 L = 0.7
-g = 9.81
+g = 1.352
 t_end = 7.0
 dt = 0.01
 
@@ -86,7 +86,7 @@ line_h_time, = ax3.plot([], [], color="tab:purple", linewidth=1, label="Height")
 ax3.set_xlabel("Time (s)")
 ax3.set_ylabel("Height (m)")
 ax3.tick_params(axis="y", labelcolor="tab:purple")
-ax3.set_title("Height Vs Velocity")
+ax3.set_title("Height Vs Time")
 
 axcolor = "lightgoldenrodyellow"
 planet_w = 0.10
@@ -138,14 +138,12 @@ s_r = Slider(ax_r, "Balloon Radius", 0.0, 30.0, valinit=s_r_init, valstep=0.1)
 s_g = Slider(ax_g, "Gravity", 1.0, 20.0, valinit=g)
 s_L = Slider(ax_L, "Balloon Material Density", 0.01, 5.0, valinit=L, valstep=0.01)
 s_gas = Slider(ax_gas, "Balloon Gas Density", 0.01, 1.0, valinit=gas_density, valstep=0.01)
-s_tend = Slider(ax_tend, "time end", 1.0, 200.0, valinit=t_end, valstep=0.1)
-s_tend_coarse = Slider(ax_tend2, "time end coarse", 100.0, 20000.0, valinit=100.0, valstep=100.0)
+s_tend = Slider(ax_tend, "Time End", 1.0, 200.0, valinit=t_end, valstep=0.1)
+s_tend_coarse = Slider(ax_tend2, "Time End Coarse", 100.0, 20000.0, valinit=100.0, valstep=100.0)
 
 vt_time_vline, = ax1.plot([], [], linestyle='--', color='tab:purple', linewidth=1.2)
 vt_time_marker, = ax1.plot([], [], marker='o', color='tab:purple')
 vt_height_marker, = ax2.plot([], [], marker='o', color='tab:purple')
-text_time_tag = ax1.text(0, 0, '', ha='center', va='top', fontsize=8, color='tab:purple', visible=False)
-text_height_tag = ax2.text(0, 0, '', ha='center', va='top', fontsize=8, color='tab:purple', visible=False)
 
 annot_by_ax = {}
 
@@ -307,41 +305,10 @@ def update(val):
         vt_time_vline.set_data([t_cross, t_cross], [ymin, ymax])
         vt_time_marker.set_data([t_cross], [v_cross])
         vt_height_marker.set_data([h_cross], [v_cross])
-        try:
-            coarse_val = s_tend_coarse.val
-        except Exception:
-            coarse_val = 0
-        if coarse_val > 1:
-            text_time_tag.set_visible(False)
-            text_height_tag.set_visible(False)
-        else:
-            try:
-                ymin, ymax = ax1.get_ylim()
-                yr = ymax - ymin if ymax - ymin != 0 else 1.0
-                # position the tag slightly below the marker (anchor text top at this y)
-                text_time_tag.set_position((t_cross, v_cross - 0.02 * yr))
-                text_time_tag.set_text(f"t={t_cross:.3f}\nv={v_cross:.3f}")
-                text_time_tag.set_visible(True)
-            except Exception:
-                pass
-            try:
-                ymin2, ymax2 = ax2.get_ylim()
-                yr2 = ymax2 - ymin2 if ymax2 - ymin2 != 0 else 1.0
-                # position the tag slightly below the marker (anchor text top at this y)
-                text_height_tag.set_position((h_cross, v_cross - 0.02 * yr2))
-                text_height_tag.set_text(f"h={h_cross:.3f}\nv={v_cross:.3f}")
-                text_height_tag.set_visible(True)
-            except Exception:
-                pass
     else:
         vt_time_vline.set_data([], [])
         vt_time_marker.set_data([], [])
         vt_height_marker.set_data([], [])
-        try:
-            text_time_tag.set_visible(False)
-            text_height_tag.set_visible(False)
-        except Exception:
-            pass
     line_h_time.set_data(t_vals, h_vals)
     if t_vals.size:
         ax3.set_xlim(t_vals.min(), t_vals.max())
