@@ -9,7 +9,7 @@ g = 1.352
 t_end = 7.0
 dt = 0.01
 payload_mass = 0
-payload_density = 100
+payload_density = 500.0
 
 
 def simulate(r_balloon, g, L, gas_density, t_end, dt, payload_mass=0, payload_density=500.0, planet="titan"):
@@ -75,7 +75,7 @@ gs = fig.add_gridspec(1, 3, width_ratios=[1.0, 1.0, 0.35])
 ax1 = fig.add_subplot(gs[0, 0])
 ax2 = fig.add_subplot(gs[0, 1])
 ax3 = fig.add_subplot(gs[0, 2])
-plt.subplots_adjust(left=0.06, right=0.98, top=0.93, bottom=0.52, wspace=0.375)
+plt.subplots_adjust(left=0.06, right=0.98, top=0.93, bottom=0.50, wspace=0.375)
 
 (line_v_time,) = ax1.plot(t_values, v_values, color="tab:blue", label="Velocity")
 ax1.set_xlabel("Time (s)")
@@ -148,7 +148,7 @@ ax_planet = plt.axes([planet_x, box_y, planet_w, box_h], facecolor=axcolor)
 planet_radio = RadioButtons(ax_planet, ("Earth", "Titan"), active=1)
 for lbl in planet_radio.labels:
     lbl.set_ha("center")
-    lbl.set_position((0.55, lbl.get_position()[1]))
+    lbl.set_position((0.5, lbl.get_position()[1]))
 
 ax_mass = plt.axes([mass_x, box_y, mass_w, box_h], facecolor="#f0fff4")
 ax_mass.set_xticks([])
@@ -186,7 +186,7 @@ def planet_changed(label):
 
 planet_radio.on_clicked(planet_changed)
 
-slider_x = 0.15
+slider_x = 0.22
 slider_w = 0.70
 slider_h = 0.03
 gap = 0.01
@@ -206,20 +206,21 @@ s_r_min = (4.0 * L) / s_r_denom if s_r_denom > 0 else 0.1
 s_r_min = max(s_r_min, 0.1)
 s_r_init = max(r_balloon, s_r_min)
 
-s_r = Slider(ax_r, "Balloon Radius", 0.0, 30.0, valinit=s_r_init, valstep=0.1)
-s_g = Slider(ax_g, "Gravity", 1.0, 20.0, valinit=g)
-s_L = Slider(ax_L, "Balloon Material Density", 0.01, 5.0, valinit=L, valstep=0.01)
-s_gas = Slider(ax_gas, "Balloon Gas Density", 0.01, 1.0, valinit=gas_density, valstep=0.01)
+s_r = Slider(ax_r, "Balloon Radius (m)", 0.0, 30.0, valinit=s_r_init, valstep=0.1)
+s_g = Slider(ax_g, "Gravity (m/s^2)", 1.0, 20.0, valinit=g)
+s_L = Slider(ax_L, "Balloon Material Density (kg/m^2)", 0.01, 5.0, valinit=L, valstep=0.01)
+s_gas = Slider(ax_gas, "Balloon Gas Density (kg/m)", 0.01, 1.0, valinit=gas_density, valstep=0.01)
 s_payload = Slider(ax_payload, "Payload Mass (kg)", 0.0, 500.0, valinit=payload_mass, valstep=0.5)
-s_payload_density = Slider(ax_payload_density, "Payload Density (kg/m3)", 1.0, 5000.0, valinit=payload_density, valstep=1.0)
-s_tend = Slider(ax_tend, "Time End", 1.0, 200.0, valinit=t_end, valstep=0.1)
-s_tend_coarse = Slider(ax_tend2, "Time End Coarse", 100.0, 20000.0, valinit=100.0, valstep=100.0)
+s_payload_density = Slider(ax_payload_density, "Payload Density (kg/m^3)", 1.0, 5000.0, valinit=payload_density, valstep=1.0)
+s_tend = Slider(ax_tend, "Time End (s)", 1.0, 200.0, valinit=t_end, valstep=0.1)
+s_tend_coarse = Slider(ax_tend2, "Time End Coarse (s)", 100.0, 20000.0, valinit=100.0, valstep=100.0)
 
 (vt_time_vline,) = ax1.plot([], [], linestyle="--", color="tab:purple", linewidth=1.2)
 (vt_time_marker,) = ax1.plot([], [], marker="o", color="tab:purple")
 (vt_height_marker,) = ax2.plot([], [], marker="o", color="tab:purple")
 
 annot_by_ax = {}
+
 
 def format_xy(x, y, ax=None):
     def infer_name(label):
@@ -258,6 +259,7 @@ def format_xy(x, y, ax=None):
         return f"{xname}={x:.4g}\n{yname}={y:.4g}"
     except Exception:
         return f"x={x}\ny={y}"
+
 
 def on_motion(event):
     ax = event.inaxes
@@ -347,7 +349,9 @@ def on_motion(event):
 
     fig.canvas.draw_idle()
 
+
 fig.canvas.mpl_connect("motion_notify_event", on_motion)
+
 
 def find_vt_crossing(t_vals, h_vals, v_vals, vt_vals):
     idxs = np.where(np.isclose(v_vals, vt_vals, rtol=1e-3, atol=1e-3))[0]
@@ -358,6 +362,7 @@ def find_vt_crossing(t_vals, h_vals, v_vals, vt_vals):
     if change.size:
         return change[0] + 1
     return None
+
 
 def compute_stats(t_vals, h_vals, v_vals, vt_vals):
     vt_idx = find_vt_crossing(t_vals, h_vals, v_vals, vt_vals)
@@ -379,12 +384,14 @@ def compute_stats(t_vals, h_vals, v_vals, vt_vals):
         h_zero = None
 
     if zero_crossings.size >= 2:
-        start = zero_crossings[-2]
-        end = zero_crossings[-1] + 1
-        h_tail = h_vals[start:end]
+        tail_start = zero_crossings[-4] if zero_crossings.size >= 4 else zero_crossings[0]
+        h_tail = h_vals[tail_start:]
         if h_tail.size > 0:
             resting_h = np.mean(h_tail)
-            amplitude = (np.max(h_tail) - np.min(h_tail)) / 2.0
+            last_min_idx = zero_crossings[-2] if zero_crossings.size >= 2 else zero_crossings[0]
+            last_max_idx = zero_crossings[-1]
+            h_last_cycle = h_vals[last_min_idx:last_max_idx + 1]
+            amplitude = (np.max(h_last_cycle) - np.min(h_last_cycle)) / 2.0 if h_last_cycle.size > 0 else 0.0
         else:
             resting_h = None
             amplitude = None
@@ -396,6 +403,7 @@ def compute_stats(t_vals, h_vals, v_vals, vt_vals):
         amplitude = None
 
     return t_vt, h_vt, t_zero, h_zero, resting_h, amplitude
+
 
 def build_info_text(t_vt, h_vt, t_zero, h_zero, resting_h, amplitude):
     def fmt(val, unit):
@@ -409,10 +417,12 @@ def build_info_text(t_vt, h_vt, t_zero, h_zero, resting_h, amplitude):
         line3 = "Resting height    :  N/A (extend time or balloon still rising)"
     return f"{line1}\n{line2}\n{line3}"
 
+
 def build_mass_text(V_balloon, V_payload, m_balloon, payload_mass):
     line1 = f"Balloon  Volume: {V_balloon:.2f} m^3    Mass: {m_balloon:.2f} kg"
     line2 = f"Payload  Volume: {V_payload:.3f} m^3    Mass: {payload_mass:.1f} kg"
     return f"{line1}\n{line2}"
+
 
 def update(val):
     r = s_r.val
@@ -467,6 +477,7 @@ def update(val):
 
     fig.canvas.draw_idle()
 
+
 s_r.on_changed(update)
 s_g.on_changed(update)
 s_L.on_changed(update)
@@ -475,8 +486,10 @@ s_payload.on_changed(update)
 s_payload_density.on_changed(update)
 s_tend.on_changed(update)
 
+
 def coarse_changed(val):
     s_tend.set_val(val)
+
 
 s_tend_coarse.on_changed(coarse_changed)
 
